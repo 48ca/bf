@@ -4,18 +4,18 @@
 
 #define DEBUG 0
 
-#define MAX_FILE_SIZE 10000
-#define MEM_SIZE 10000
-#define MAX_LOOPS 1000
+#define MAX_FILE_SIZE 1000000 // 1 MB
+#define MEM_SIZE 100000 // 100 KB
+#define MAX_LOOPS 100000
 
-static char array[MEM_SIZE];
+static char* array;
 static char* ptr;
 
 struct loop {
     unsigned begin;
     unsigned end;
 };
-static struct loop loops[MAX_LOOPS];
+static struct loop* loops;
 static unsigned numLoops = 0;
 
 void printHelp(const char* fn) {
@@ -101,15 +101,16 @@ int interpret(const char* filename) {
     memset(loops, 0, MAX_LOOPS * sizeof(struct loop));
     ptr = array;
 
-    char buffer[MAX_FILE_SIZE];
+    char* buffer = (char*) malloc(sizeof(char) * MAX_FILE_SIZE);
 
-    // read file and generate loop lookups
+    // read file into memory, skipping all unknown tokens
     char c;
     unsigned initpos = 0;
     int currentLoop = -1; // start counting at 0
     int builtLoops = 0;
     while((c = getc(file)) != EOF) {
         switch(c) {
+            // create loop jump lookup array
             case '[':
                 currentLoop++;
                 loops[currentLoop].begin = initpos;
@@ -141,6 +142,7 @@ set:
     }
     if(currentLoop - builtLoops != -1) {
         puts("Unbalanced loops detected");
+        free(buffer);
         return 1;
     }
     numLoops = builtLoops;
@@ -159,6 +161,7 @@ set:
         ++pos;
     }
 
+    free(buffer);
     fclose(file);
     return 0;
 }
@@ -169,6 +172,9 @@ int main(int argc, char** argv) {
         printHelp(argv[0]);
         return 1;
     }
+
+    array = (char*) malloc(sizeof(char) * MEM_SIZE);
+    loops = (struct loop*) malloc(sizeof(struct loop) * MAX_LOOPS);
 
     register int i;
     for(i = 1; i < argc; ++i) {
