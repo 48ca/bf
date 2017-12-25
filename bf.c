@@ -1,3 +1,6 @@
+// vim: ts=4:sw=4
+//[{ }
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -19,7 +22,7 @@ static struct loop* loops;
 static unsigned numLoops = 0;
 
 void printHelp(const char* fn) {
-    fprintf(stderr, "usage: %s <input>\n", fn);
+    fprintf(stderr, "usage: %s <input files>\n", fn);
     return;
 }
 void printLoops(void) {
@@ -185,3 +188,9 @@ int main(int argc, char** argv) {
     }
     return 0;
 }
+
+/* ]
+ * +[----->+++<]>+++.---------.++++++++++++.--------.[--->+<]>-
+ * ---.+[---->+<]>+++.--[->++++<]>-.-[->+++<]>-.--[--->+<]>--.+
+ * [---->+<]>+++.-[--->++<]>--.---.+++++++++++++.-------------.
+*/
