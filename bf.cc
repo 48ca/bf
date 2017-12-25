@@ -81,6 +81,7 @@ void readFile(const char* filename) {
             if(c == '[') {
                 stack.push(pos);
             } else if(c == ']') {
+                if(stack.empty()) throw std::runtime_error("Unbalanced loops... exiting");
                 unsigned jp = stack.top(); stack.pop();
                 forward_jump_map[jp] = pos;
                 backward_jump_map[pos] = jp;
@@ -115,7 +116,7 @@ int main(int argc, char** argv) {
         try {
             readFile(argv[i]);
         } catch (std::runtime_error& e) {
-            std::cerr << "Caught runtime error: " << e.what() << std::endl;
+            std::cerr << e.what() << std::endl;
             return 1;
         }
     }
