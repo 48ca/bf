@@ -140,6 +140,7 @@ set:
                 break;
         }
     }
+
     if(currentLoop - builtLoops != -1) {
         puts("Unbalanced loops detected");
         free(buffer);
@@ -148,6 +149,7 @@ set:
     numLoops = builtLoops;
     if(DEBUG) {
         printLoops();
+        buffer[initpos + 1] = 0; // so we can treat it is a string
         puts(buffer);
     }
 
