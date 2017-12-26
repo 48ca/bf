@@ -4,7 +4,7 @@
 #include <array>
 #include <functional>
 
-#define BUFFER_SIZE 10000
+#define BUFFER_SIZE 1000000
 #define F(func) std::bind(&Buffer::func, this)
 
 class Buffer {
