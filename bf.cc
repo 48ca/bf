@@ -9,13 +9,16 @@
 #include <unordered_map>
 #include <functional>
 
-#define DEBUG false
-#define FLUSH_ON_WRITE true
-
 using namespace std::literals::string_literals;
 
-void printHelp(const char* exec) {
-    std::cout << "Usage: " << exec << " [input files]" << std::endl;
+unsigned DATA_SIZE = 100000; // 100K
+bool FLUSH_ON_WRITE = false;
+const bool DEBUG = false;
+
+static std::string callee{"brainfuck"};
+
+void printHelp() {
+    std::cout << "Usage: " << callee << " [input files]" << std::endl;
     return;
 }
 
@@ -27,10 +30,13 @@ struct BFData {
 };
 
 void interpret(struct BFData& data) {
-    std::array<char, 100000> scratch{};
+    std::vector<char> scratch(DATA_SIZE);
     unsigned scratch_index = 0;
     unsigned ip = 0; // instruction pointer
+
+    /* define functions in vector to get rid of hashing overhead */
     std::vector<std::function<void(void)>> fn_map(256);
+
     fn_map['['] = [&](void){
         if(scratch[scratch_index] != 0) return;
         ip = data.fjm[ip]; // execute forwards jump
@@ -39,8 +45,10 @@ void interpret(struct BFData& data) {
         if(scratch[scratch_index] == 0) return;
         ip = data.bjm[ip]; // execute backwards jump
     };
-
-    fn_map['>'] = [&](void){ scratch_index++; },
+    fn_map['>'] = [&](void){
+        if(scratch_index++ >= DATA_SIZE)
+            throw std::runtime_error("Buffer overflow datected");
+    },
     fn_map['<'] = [&](void){
         if(scratch_index-- == 0)
             throw std::runtime_error("Attempted to set a negative data pointer offset");
@@ -53,6 +61,8 @@ void interpret(struct BFData& data) {
             fflush(stdout);
     };
     fn_map[','] = [&](void){ scratch[scratch_index] = getchar(); };
+
+    /* start execution */
     for(ip = 0; ip < data.buffer_length; ++ip) {
         // std::cout << "Executing " << data.buffer[ip] << ' ' << ip << ' ' << scratch_index << std::endl;
         fn_map[data.buffer[ip]]();
@@ -60,12 +70,8 @@ void interpret(struct BFData& data) {
     return;
 }
 
-void readFile(const char* filename) {
-    std::ifstream inf{filename};
+void read(std::istream& instream) {
     std::string buffer;
-    if(!inf) {
-        throw std::runtime_error("Failed to open file: "s + filename);
-    }
 
     char c;
     std::unordered_set<char> char_set {
@@ -77,14 +83,16 @@ void readFile(const char* filename) {
     std::unordered_map<unsigned, unsigned> forward_jump_map;
     std::unordered_map<unsigned, unsigned> backward_jump_map;
 
+    const std::runtime_error loop_error("Unbalanced loops detected");
+
     unsigned pos = 0;
-    while(inf >> c) {
+    while(instream >> c) {
         if(char_set.find(c) != char_set.end()) {
             buffer += c;
             if(c == '[') {
                 stack.push(pos);
             } else if(c == ']') {
-                if(stack.empty()) throw std::runtime_error("Unbalanced loops... exiting");
+                if(stack.empty()) throw loop_error;
                 unsigned jp = stack.top(); stack.pop();
                 forward_jump_map[jp] = pos;
                 backward_jump_map[pos] = jp;
@@ -93,7 +101,7 @@ void readFile(const char* filename) {
         }
     }
     if(!stack.empty()) {
-        throw std::runtime_error("Unbalanced loops... exiting");
+        throw loop_error;
     }
     struct BFData data = {
         std::move(buffer),
@@ -110,18 +118,77 @@ void readFile(const char* filename) {
     interpret(data);
 }
 
-int main(int argc, char** argv) {
-    if(argc == 1) {
-        printHelp(argv[0]);
+int parseArguments(int argc, char** argv) {
+    /*
+    std::string filename;
+    std::ifstream inf{filename};
+    if(!inf) {
+        throw std::runtime_error("Failed to open file '"s + filename + '\'');
+    }
+    */
+
+    bool readFromCin = false;
+    bool istreamSet = false;
+
+    int i = 1;
+
+    std::string filename;
+
+    std::unordered_map<std::string, std::function<void(void)>> flag_map {
+        {"-h", [&]() { printHelp(); exit(1); } },
+        {"--help", [&]() { printHelp(); exit(1); } },
+        {"-",  [&]() {
+                         if(istreamSet)
+                             throw std::runtime_error("Attempted to read from stdin after setting filename");
+                         readFromCin = true; istreamSet = true;
+                     }
+        },
+        {"-f", [&]() { FLUSH_ON_WRITE = true; } },
+        {"-d", [&]() { if(++i < argc) DATA_SIZE = atoi(argv[i]); else throw std::runtime_error("Flag '-d' missing argument"); } }
+    };
+
+    auto parseFlag = [&flag_map](std::string flag) {
+        auto got = flag_map.find(flag);
+        if(got == flag_map.end())
+            throw std::runtime_error("Failed to parse argument " + flag);
+        return flag_map[flag]();
+    };
+
+    for(; i < argc; ++i) {
+        if(argv[i][0] == '-') {
+            parseFlag(argv[i]);
+        } else {
+            if(istreamSet)
+                throw std::runtime_error("Attempted to set input twice");
+            filename = argv[i];
+            istreamSet = true;
+        }
+    }
+    if(!istreamSet) {
+        printHelp();
         return 1;
     }
-    for(int i = 1; i < argc; ++i) {
-        try {
-            readFile(argv[i]);
-        } catch (std::runtime_error& e) {
-            std::cerr << e.what() << std::endl;
+    if(readFromCin) {
+        read(std::cin);
+    } else {
+        std::ifstream inf{filename};
+        read(inf);
+    }
+    return 0;
+}
+
+int main(int argc, char** argv) {
+    callee = argv[0];
+    if(argc == 1) {
+        printHelp();
+        return 1;
+    }
+    try {
+        if(parseArguments(argc, argv))
             return 1;
-        }
+    } catch (std::runtime_error& e) {
+        std::cerr << "FATAL: " << e.what() << std::endl;
+        return 1;
     }
     return 0;
 }

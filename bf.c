@@ -6,7 +6,7 @@
 #include <string.h>
 
 #define DEBUG 0
-#define FLUSH_ON_WRITE 1
+#define FLUSH_ON_WRITE 0
 
 #define MAX_FILE_SIZE 1000000 // 1 MB
 #define MEM_SIZE 100000 // 100 KB
