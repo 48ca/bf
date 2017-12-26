@@ -12,6 +12,7 @@ elseif(CMAKE_COMPILER_IS_GNUXX OR CMAKE_COMPILER_IS_GNUCC)
 endif()
 
 add_executable(brainfuck bf.cc)
+add_executable(texttobf texttobf.cc)
 add_executable(brainfuckc bf.c)
 # add_executable(brainfuckc bf.c)
 
