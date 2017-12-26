@@ -51,7 +51,7 @@ void interpret(struct BFData& data) {
     };
     fn_map['>'] = [&](void){
         if(scratch_index++ >= DATA_SIZE)
-            throw std::runtime_error("Buffer overflow datected");
+            throw std::runtime_error("Buffer overflow detected");
     },
     fn_map['<'] = [&](void){
         if(scratch_index-- == 0)

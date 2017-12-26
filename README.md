@@ -6,3 +6,14 @@
 These interpreters have no special behavior when reading EOFs from `stdin` (due to executing a ','), and the data arrays for both contain 8-bit values. There are checks to prevent integer underflow on the data offset pointer (index of the vector).
 
 `texttobf.cc` is a very basic program that converts text into executable brainfuck code that will output the text that was inputted.
+
+## Building
+You can build these files like any other CMake project:
+```
+cmake .
+make
+```
+You can install the `brainfuck` binary if you want that to be your system-wide brainfuck interpreter by running
+```
+sudo make install
+```
