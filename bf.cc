@@ -18,7 +18,11 @@ const bool DEBUG = false;
 static std::string callee{"brainfuck"};
 
 void printHelp() {
-    std::cout << "Usage: " << callee << " [input files]" << std::endl;
+    std::cout << "Usage: " << callee << " [options] <input file>" << std::endl;
+    std::cerr << "Options:"         << '\n'
+              << "\t-h, --help\t"   << "Show this help message\n"
+              << "\t-d <bytes>\t"   << "Set size of data array for the programs (default: 100 KB)\n"
+              << "\t-f\t\t"         << "Flush stdout every time a character is written\n";
     return;
 }
 
