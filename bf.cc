@@ -41,7 +41,10 @@ void interpret(struct BFData& data) {
     };
 
     fn_map['>'] = [&](void){ scratch_index++; },
-    fn_map['<'] = [&](void){ scratch_index--; },
+    fn_map['<'] = [&](void){
+        if(scratch_index-- == 0)
+            throw std::runtime_error("Attempted to set a negative data pointer offset");
+    },
     fn_map['+'] = [&](void){ scratch[scratch_index]++; },
     fn_map['-'] = [&](void){ scratch[scratch_index]--; },
     fn_map['.'] = [&](void){
@@ -89,7 +92,7 @@ void readFile(const char* filename) {
             pos++;
         }
     }
-    if(stack.size() != 0) {
+    if(!stack.empty()) {
         throw std::runtime_error("Unbalanced loops... exiting");
     }
     struct BFData data = {
