@@ -176,6 +176,8 @@ int parseArguments(int argc, char** argv) {
         read(std::cin);
     } else {
         std::ifstream inf{filename};
+        if(!inf)
+            throw std::runtime_error("Failed to read file '" + filename + '\'');
         read(inf);
     }
     return 0;
